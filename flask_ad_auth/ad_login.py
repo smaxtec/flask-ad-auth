@@ -143,8 +143,6 @@ class User(object):
         for g in self.groups:
             if g["id"] == group:
                 return True
-            if g["name"].lower() == group.lower():
-                return True
         return False
 
     def is_in_default_group(self):
