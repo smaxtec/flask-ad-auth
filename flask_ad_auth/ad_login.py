@@ -141,8 +141,12 @@ class User(object):
 
     def is_in_group(self, group):
         if isinstance(group, list):
+            if isinstance(self.groups[0], dict):
+                for g in self.groups:
+                    if g["id"] in group:
+                        return True
             return any(item in group for item in self.groups)
-        return group in self.groups
+        return group in self.group_string
 
     def is_in_default_group(self):
         return self.is_in_group(current_app.config["AD_AUTH_GROUP"])
