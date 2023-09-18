@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "flask-ad-auth"
+version = "1.0.0"
+description = "Flask Azure AD Authorization Extension (based on flask-login)"
+authors = [
+    "Florian Klien <florian.klien@smaxtec.com>",
+    "Kristof Krenn <kristof.krenn@smaxtec.com>",
+    "Matthias Thym <matthias.thym@smaxtec.com>",
+    "Matthias Wutte <matthias.wutte@gmail.com>",
+    "Matthias Wutte <matthias.wutte@smaxtec.com>",
+    "Philipp Kulich <philipp.kulich@smaxtec.com>"
+]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+flask-login = "<=0.6.1"
+requests = "^2.31.0"
+flask = "^2.3.3"
+werkzeug = "^2.3.7"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.2"
+mock = "^5.1.0"
+
+[tool.semantic_release]
+version_variable = [ "pyproject.toml:version" ]
+build_command = "poetry build"
+
+[tool.isort]
+profile = "black"

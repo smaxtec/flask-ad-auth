@@ -1,12 +1,14 @@
 # flask-ad-auth
+
 Flask Azure AD Authorization Extension (based on flask-login)
 
-This will use the login with Microsoft AZure AD functionality to authorize
-users for you flask application. You can Check if an user has a azureAD
-user in your organisation or if he belongs to a specific group.
+This will use the login with Microsoft Azure AD functionality to authorise users for you flask application.
+You can Check if an user has a azureAD user in your organisation or if he belongs to a specific group.
 
-## Register an Azure AD App ##
+## Register an Azure AD App
+
 Next step is registering an app that has read permissions to the Azure AD. You'll need to clientid and clientsecret of this app in order to run this sample against your Azure AD. Follow below steps to register an Azure app:
+
 - Sign in to the Azure management portal
 - Click on Active Directory in the left hand nav
 - Click the directory tenant where you wish to register the sample application
@@ -18,20 +20,24 @@ Next step is registering an app that has read permissions to the Azure AD. You'l
 - For the App ID URI, enter "http://localhost". Click the checkmark to complete the initial configuration
 - While still in the Azure portal, click the Configure tab of your application
 - Find the Client ID value and copy it aside, you will need this later when configuring your application
-- Under the Keys section, select either a 1year or 2year key - the keyValue will be displayed after you save the configuration at the end - it will be displayed, and you should save this to a secure location. **Note, that the key value is only displayed once, and you will not be able to retrieve it later**
+- Under the Keys section, select either a 1year or 2year key - the keyValue will be displayed after you save the configuration at the end - it will be displayed, and you should save this to a secure location.
+  **Note, that the key value is only displayed once, and you will not be able to retrieve it later**
 - Configure Permissions - under the "Permissions to other applications" section, you will configure permissions to access the Graph
 - The following Permissions are needed: Group.Read.All, User.Read, User.Read.All
 - Select the Save button at the bottom of the screen - **upon successful configuration, your Key value should now be displayed - please copy and store this value in a secure location**
 
 ## Configuration
+
 You need to set the following Flask Config Variables:
+
 - AD_SQLITE_DB = "my_user_db.db3"
 - AD_APP_ID = "FROM ABOVE"
 - AD_APP_KEY = "FROM ABOVE"
 - AD_REDIRECT_URI = "http://localhost:5000/connect/get_token" # for testing on localhost
 
-# Usage
-```
+## Usage
+
+```python
 # In you App Init
 from flask import Flask
 from flask import url_for, redirect, request
@@ -83,41 +89,46 @@ def login_form():
     return 'not logged in<br/><a href="{}">login</a>'.format(ad_auth.sign_in_url)
 
 if __name__ == '__main__':
-	app.run( debug=True, host='0.0.0.0', port=5000)
+  app.run( debug=True, host='0.0.0.0', port=5000)
 ```
 
-# Build for PIP
+## Build for PIP
 
-```
-python2 setup.py sdist bdist_wheel
-python3 setup.py sdist bdist_wheel
+```shell
+poetry build
 twine upload dist/*
 ```
 
-# Changes
+## Changes
 
-### Version 0.8 ###
+### Version 1.0.0
 
-* Fixed Setup for pypi installs
+- Move to Python 3.10
+- Introduce devenv
+- Manage dependencies with poetry
 
-### Version 0.7 ###
+### Version 0.8
 
-* Fixed an edge case in which the refresh token was not accepted anymore
+- Fixed Setup for pypi installs
 
-### Version 0.6 ###
+### Version 0.7
 
-* New Config: "AD_AUTH_USER_BASECLASS" sets the base for all Users
+- Fixed an edge case in which the refresh token was not accepted anymore
 
-### Version 0.5 ###
+### Version 0.6
 
-* Added Group Name Cache
-* Group-Access now takes name or id of the group
+- New Config: "AD_AUTH_USER_BASECLASS" sets the base for all Users
 
-### Version 0.4 ###
+### Version 0.5
 
-* Reload on Empty Database fixed
+- Added Group Name Cache
+- Group-Access now takes name or id of the group
 
-### Version 0.3 ###
+### Version 0.4
 
-* Fixed SQLite Storage (THX @mowoe)
-* Added SQlite Database Test
+- Reload on Empty Database fixed
+
+### Version 0.3
+
+- Fixed SQLite Storage (THX @mowoe)
+- Added SQlite Database Test
