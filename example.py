@@ -34,13 +34,13 @@ app.before_request(redirect_unauthorized)
 @app.route("/protected")
 @login_required
 def protected_view():
-    return "Logged in as {}".format(current_user.email)
+    return f"Logged in as {current_user.email}"
 
 
 @app.route("/group_protected")
 @ad_group_required("sdadsad-6a93-d3432-a4be-f1cbsdsaa0d4")
 def group_protected_view():
-    return "Logged in as {}".format(current_user.email)
+    return f"Logged in as {current_user.email}"
 
 
 @app.route("/logout")
@@ -54,8 +54,8 @@ def logout():
 @app.route("/login_form")
 def login_form():
     if current_user.is_authenticated:
-        return 'logged in<br/><a href="{}">logout</a>'.format(url_for("logout"))
-    return 'not logged in<br/><a href="{}">login</a>'.format(ad_auth.sign_in_url)
+        return f"logged in<br/><a href=\"{url_for('logout')}\">logout</a>"
+    return f'not logged in<br/><a href="{ad_auth.sign_in_url}">login</a>'
 
 
 if __name__ == "__main__":

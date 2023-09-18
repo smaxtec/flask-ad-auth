@@ -316,9 +316,7 @@ class ADAuth(LoginManager):
                 c = getattr(m, classname)
                 if not inspect.isclass(c):
                     raise ValueError(
-                        "{} is not a valid class".format(
-                            app.config["AD_AUTH_USER_BASECLASS"]
-                        )
+                        f"{app.config['AD_AUTH_USER_BASECLASS']} is not a valid class"
                     )
                 self.user_baseclass = c
 
@@ -328,7 +326,7 @@ class ADAuth(LoginManager):
         elif app.config["AD_STORAGE"] == "redis":
             self.setDatabaseClass(RedisDatabase)
         else:
-            raise ValueError("unknown storage {}".format(app.config["AD_STORAGE"]))
+            raise ValueError(f"unknown storage {app.config['AD_STORAGE']}")
 
         # Parent init call
         super(ADAuth, self).init_app(
@@ -448,7 +446,7 @@ class ADAuth(LoginManager):
             current_app.config["AD_TOKEN_URL"], data=refresh_params
         ).json()
         if "access_token" not in r or not r["access_token"]:
-            logger.error("error refreshing user. result: {}".format(r))
+            logger.error(f"error refreshing user. result: {r}")
             return None
         return RefreshToken(
             access_token=r["access_token"],
@@ -462,18 +460,18 @@ class ADAuth(LoginManager):
         Get the AD User Object.
         """
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
+            "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
         }
         params = {"api-version": "1.6"}
-        url = "{}/me".format(current_app.config["AD_GRAPH_URL"])
+        url = f"{current_app.config['AD_GRAPH_URL']}/me"
         r = requests.get(url, headers=headers, params=params)
         return r.json()
 
     @classmethod
     def load_all_groups_from_ad(cls, access_token):
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
+            "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
         }
         params = {"api-version": "1.6"}
@@ -510,12 +508,12 @@ class ADAuth(LoginManager):
         Get a list with the id of all groups the user belongs to.
         """
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
+            "Authorization": f"Bearer {access_token}",
             "Accept": "application/json",
         }
         params = {"api-version": "1.6"}
         body = {"securityEnabledOnly": False}
-        url = "{}/me/getMemberGroups".format(current_app.config["AD_GRAPH_URL"])
+        url = f"{current_app.config['AD_GRAPH_URL']}/me/getMemberGroups"
         my_groups = requests.post(url, headers=headers, params=params, json=body).json()
         out = []
         for g in my_groups["value"]:
