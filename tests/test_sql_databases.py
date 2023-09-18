@@ -1,7 +1,8 @@
-import unittest
 import time
+import unittest
 
 from flask import Flask
+
 from flask_ad_auth import ADAuth, User
 
 

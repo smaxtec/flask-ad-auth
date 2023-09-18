@@ -1,6 +1,6 @@
 # In you App Init
-from flask import Flask
-from flask import url_for, redirect, request
+from flask import Flask, redirect, request, url_for
+
 from flask_ad_auth import ADAuth
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ ad_auth = ADAuth()
 ad_auth.init_app(app)
 
 # In you Views:
-from flask_ad_auth import login_required, current_user, ad_group_required, logout_user
+from flask_ad_auth import ad_group_required, current_user, login_required, logout_user
 
 
 # optional automatic redirect to login form:

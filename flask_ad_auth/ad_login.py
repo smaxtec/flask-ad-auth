@@ -4,31 +4,32 @@
 import sqlite3
 
 try:
-    from urlparse import urlparse, urlunparse
     from urllib import urlencode
+
+    from urlparse import urlparse, urlunparse
 except ImportError:
     from urllib.parse import urlparse, urlunparse, urlencode
 
-import json
-import logging
 import base64
 import datetime
-import time
-import requests
 import functools
 import importlib
 import inspect
+import json
+import logging
+import time
 from collections import namedtuple
+
+import requests
 
 try:
     import redis
 except Exception:
     redis = None
 
-from flask import current_app, request, abort, redirect, make_response, g, flash
 from flask import _app_ctx_stack as stack
-from flask_login import LoginManager, login_user, current_user
-
+from flask import abort, current_app, flash, g, make_response, redirect, request
+from flask_login import LoginManager, current_user, login_user
 
 logger = logging.getLogger(__name__)
 
