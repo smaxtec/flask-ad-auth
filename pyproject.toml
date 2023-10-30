@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "flask-ad-auth"
+version = "1.0.0"
+description = "Flask Data Visualization Helpers"
+authors = [
+    "Florian Klien <florian.klien@smaxtec.com>",
+    "Kristof Krenn <kristof.krenn@smaxtec.com>",
+    "Matthias Thym <matthias.thym@smaxtec.com>",
+    "Matthias Wutte <matthias.wutte@gmail.com>",
+    "Matthias Wutte <matthias.wutte@smaxtec.com>",
+    "Mwoermann <mwoermann@informationsfabrik.de>",
+    "Philipp Kulich <philipp.kulich@smaxtec.com>"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+
+flask = "^2.0.1"
+werkzeug = "^2.0.3"
+flask-login = "^0.6.1"
+requests = "^2.31.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.3"
+mock = "^5.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.5.1"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.semantic_release]
+version_variable = [ "pyproject.toml:version" ]
+build_command = "poetry build"
