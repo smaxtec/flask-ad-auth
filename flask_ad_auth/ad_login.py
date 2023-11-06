@@ -4,37 +4,52 @@
 import sqlite3
 
 try:
-    from urlparse import urlparse, urlunparse
     from urllib import urlencode
+
+    from urlparse import (
+        urlparse,
+        urlunparse,
+    )
 except ImportError:
     from urllib.parse import urlparse, urlunparse, urlencode
 
-import json
-import logging
 import base64
 import datetime
-import time
-import requests
 import functools
 import importlib
 import inspect
+import json
+import logging
+import time
 from collections import namedtuple
+
+import requests
 
 try:
     import redis
 except Exception:
     redis = None
 
-from flask import current_app, request, abort, redirect, make_response, g, flash
 from flask import _app_ctx_stack as stack
-from flask_login import LoginManager, login_user, current_user
-
+from flask import (
+    abort,
+    current_app,
+    flash,
+    g,
+    make_response,
+    redirect,
+    request,
+)
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_user,
+)
 
 logger = logging.getLogger(__name__)
 
 
-RefreshToken = namedtuple("RefreshToken",
-                          ["access_token", "refresh_token", "expires_on"])
+RefreshToken = namedtuple("RefreshToken", ["access_token", "refresh_token", "expires_on"])
 
 
 def ad_group_required(ad_group):
@@ -42,6 +57,7 @@ def ad_group_required(ad_group):
     This will ensure that only an user with the correct AD group
     may access the decorated view.
     """
+
     def decorater(func):
         @functools.wraps(func)
         def decorated_view(*args, **kwargs):
@@ -52,9 +68,13 @@ def ad_group_required(ad_group):
             elif not current_user.is_in_group(ad_group):
                 if current_app.config["AD_GROUP_FORBIDDEN_REDIRECT"]:
                     return redirect(current_app.config["AD_GROUP_FORBIDDEN_REDIRECT"])
-                return abort(make_response("You dont have the necessary group to access this view", 403))
+                return abort(
+                    make_response("You dont have the necessary group to access this view", 403)
+                )
             return func(*args, **kwargs)
+
         return decorated_view
+
     return decorater
 
 
@@ -63,6 +83,7 @@ def ad_required(func):
     This will ensure that only an user with the basic AD group
     may access the decorated view.
     """
+
     @functools.wraps(func)
     def decorated_view(*args, **kwargs):
         if current_app.login_manager._login_disabled:
@@ -72,14 +93,27 @@ def ad_required(func):
         elif current_app.config["AD_AUTH_GROUP"] and not current_user.is_in_default_group():
             if current_app.config["AD_GROUP_FORBIDDEN_REDIRECT"]:
                 return redirect(current_app.config["AD_GROUP_FORBIDDEN_REDIRECT"])
-            return abort(make_response("You dont have the necessary group to access this view", 403))
+            return abort(
+                make_response("You dont have the necessary group to access this view", 403)
+            )
         return func(*args, **kwargs)
+
     return decorated_view
 
 
 class User(object):
-    def __init__(self, email, access_token, refresh_token, expires_on,
-                 token_type, resource, scope, group_string=None, metadata=None):
+    def __init__(
+        self,
+        email,
+        access_token,
+        refresh_token,
+        expires_on,
+        token_type,
+        resource,
+        scope,
+        group_string=None,
+        metadata=None,
+    ):
         self.email = email
         self.access_token = access_token
         self.refresh_token = refresh_token
@@ -198,7 +232,7 @@ class User(object):
             "resource": self.resource,
             "scope": self.scope,
             "group_string": self.group_string,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -212,7 +246,7 @@ class User(object):
             resource=d["resource"],
             scope=d["scope"],
             group_string=d["group_string"],
-            metadata=d.get("metadata", None)
+            metadata=d.get("metadata", None),
         )
 
 
@@ -225,8 +259,7 @@ class ADAuth(LoginManager):
         """
         Flask extension constructor.
         """
-        super(ADAuth, self).__init__(
-            app=app, add_context_processor=add_context_processor)
+        super(ADAuth, self).__init__(app=app, add_context_processor=add_context_processor)
         self.connection_class = SQLiteDatabase
         self.connected = False
         self.on_login_callback = None
@@ -254,23 +287,26 @@ class ADAuth(LoginManager):
         app.config.setdefault("AD_APP_KEY", None)
         app.config.setdefault("AD_REDIRECT_URI", None)
         app.config.setdefault("AD_DOMAIN_FOR_GROUPS", "smaxtec.com")
-        app.config.setdefault("AD_AUTH_URL", 'https://login.microsoftonline.com/common/oauth2/authorize')
-        app.config.setdefault("AD_TOKEN_URL", 'https://login.microsoftonline.com/common/oauth2/token')
-        app.config.setdefault("AD_GRAPH_URL", 'https://graph.windows.net')
-        app.config.setdefault("AD_CALLBACK_PATH", '/connect/get_token')
-        app.config.setdefault("AD_LOGIN_REDIRECT", '/')
+        app.config.setdefault(
+            "AD_AUTH_URL", "https://login.microsoftonline.com/common/oauth2/authorize"
+        )
+        app.config.setdefault(
+            "AD_TOKEN_URL", "https://login.microsoftonline.com/common/oauth2/token"
+        )
+        app.config.setdefault("AD_GRAPH_URL", "https://graph.windows.net")
+        app.config.setdefault("AD_CALLBACK_PATH", "/connect/get_token")
+        app.config.setdefault("AD_LOGIN_REDIRECT", "/")
         app.config.setdefault("AD_GROUP_FORBIDDEN_REDIRECT", None)
         app.config.setdefault("AD_AUTH_GROUP", None)
         app.config.setdefault("AD_AUTH_USER_BASECLASS", None)
 
-        if hasattr(app, 'teardown_appcontext'):
+        if hasattr(app, "teardown_appcontext"):
             app.teardown_appcontext(self.teardown_db)
         else:
             app.teardown_request(self.teardown_db)
 
         # Register Callback
-        app.add_url_rule(app.config["AD_CALLBACK_PATH"], "oauth_callback",
-                         self.oauth_callback)
+        app.add_url_rule(app.config["AD_CALLBACK_PATH"], "oauth_callback", self.oauth_callback)
 
         # Set Base Class
         if app.config["AD_AUTH_USER_BASECLASS"]:
@@ -281,7 +317,7 @@ class ADAuth(LoginManager):
                 m = importlib.import_module(mod)
                 c = getattr(m, classname)
                 if not inspect.isclass(c):
-                    raise ValueError("{} is not a valid class".format(app.config["AD_AUTH_USER_BASECLASS"]))
+                    raise ValueError(f"{app.config['AD_AUTH_USER_BASECLASS']} is not a valid class")
                 self.user_baseclass = c
 
         # Set Storage
@@ -290,11 +326,10 @@ class ADAuth(LoginManager):
         elif app.config["AD_STORAGE"] == "redis":
             self.setDatabaseClass(RedisDatabase)
         else:
-            raise ValueError("unknown storage {}".format(app.config["AD_STORAGE"]))
+            raise ValueError(f"unknown storage {app.config['AD_STORAGE']}")
 
         # Parent init call
-        super(ADAuth, self).init_app(
-            app=app, add_context_processor=add_context_processor)
+        super(ADAuth, self).init_app(app=app, add_context_processor=add_context_processor)
 
         self.user_loader(self.load_user)
 
@@ -309,7 +344,7 @@ class ADAuth(LoginManager):
         """
         ctx = stack.top
         self.connected = False
-        if hasattr(ctx, 'adauth_db'):
+        if hasattr(ctx, "adauth_db"):
             ctx.adauth_db.close()
 
     @property
@@ -320,9 +355,10 @@ class ADAuth(LoginManager):
         """
         ctx = stack.top
         if ctx is not None:
-            if not hasattr(ctx, 'adauth_db'):
-                ctx.adauth_db = self.connection_class(current_app.config,
-                                                      user_baseclass=self.user_baseclass)
+            if not hasattr(ctx, "adauth_db"):
+                ctx.adauth_db = self.connection_class(
+                    current_app.config, user_baseclass=self.user_baseclass
+                )
                 ctx.adauth_db.connect()
                 self.connected = True
             return ctx.adauth_db
@@ -334,9 +370,9 @@ class ADAuth(LoginManager):
         """
         url_parts = list(urlparse(current_app.config["AD_AUTH_URL"]))
         auth_params = {
-            'response_type': 'code',
-            'redirect_uri': current_app.config["AD_REDIRECT_URI"],
-            'client_id': current_app.config["AD_APP_ID"]
+            "response_type": "code",
+            "redirect_uri": current_app.config["AD_REDIRECT_URI"],
+            "client_id": current_app.config["AD_APP_ID"],
         }
         url_parts[4] = urlencode(auth_params)
         return urlunparse(url_parts)
@@ -354,33 +390,39 @@ class ADAuth(LoginManager):
         Receive OAuth Token with the code received.
         """
         token_params = {
-            'grant_type': 'authorization_code',
-            'redirect_uri': current_app.config["AD_REDIRECT_URI"],
-            'client_id': current_app.config["AD_APP_ID"],
-            'client_secret': current_app.config["AD_APP_KEY"],
-            'code': code,
-            'resource': current_app.config["AD_GRAPH_URL"]
+            "grant_type": "authorization_code",
+            "redirect_uri": current_app.config["AD_REDIRECT_URI"],
+            "client_id": current_app.config["AD_APP_ID"],
+            "client_secret": current_app.config["AD_APP_KEY"],
+            "code": code,
+            "resource": current_app.config["AD_GRAPH_URL"],
         }
         res = requests.post(current_app.config["AD_TOKEN_URL"], data=token_params)
         token = res.json()
         # Decode User Info
-        encoded_jwt = token["id_token"].split('.')[1]
+        encoded_jwt = token["id_token"].split(".")[1]
         if len(encoded_jwt) % 4 == 2:
-            encoded_jwt += '=='
+            encoded_jwt += "=="
         else:
-            encoded_jwt += '='
+            encoded_jwt += "="
         user_info = json.loads(base64.b64decode(encoded_jwt))
         # Return Important Fields
         email = user_info["upn"]
-        access_token = token['access_token']
-        refresh_token = token['refresh_token']
-        expires_on = int(token['expires_on'])
-        token_type = token['token_type']
-        resource = token['resource']
-        scope = token['scope']
-        user = self.user_baseclass(email=email, access_token=access_token,
-                                   refresh_token=refresh_token, expires_on=expires_on,
-                                   token_type=token_type, resource=resource, scope=scope)
+        access_token = token["access_token"]
+        refresh_token = token["refresh_token"]
+        expires_on = int(token["expires_on"])
+        token_type = token["token_type"]
+        resource = token["resource"]
+        scope = token["scope"]
+        user = self.user_baseclass(
+            email=email,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_on=expires_on,
+            token_type=token_type,
+            resource=resource,
+            scope=scope,
+        )
         user.set_ad_manager(self)
         return user
 
@@ -391,21 +433,22 @@ class ADAuth(LoginManager):
         get a new refresh token which can be used for the next call.
         """
         refresh_params = {
-            'grant_type': 'refresh_token',
-            'redirect_uri': current_app.config["AD_REDIRECT_URI"],
-            'client_id': current_app.config["AD_APP_ID"],
-            'client_secret': current_app.config["AD_APP_KEY"],
-            'refresh_token': refresh_token,
-            'resource': current_app.config["AD_GRAPH_URL"]
+            "grant_type": "refresh_token",
+            "redirect_uri": current_app.config["AD_REDIRECT_URI"],
+            "client_id": current_app.config["AD_APP_ID"],
+            "client_secret": current_app.config["AD_APP_KEY"],
+            "refresh_token": refresh_token,
+            "resource": current_app.config["AD_GRAPH_URL"],
         }
-        r = requests.post(current_app.config["AD_TOKEN_URL"],
-                          data=refresh_params).json()
+        r = requests.post(current_app.config["AD_TOKEN_URL"], data=refresh_params).json()
         if "access_token" not in r or not r["access_token"]:
-            logger.error("error refreshing user. result: {}".format(r))
+            logger.error(f"error refreshing user. result: {r}")
             return None
-        return RefreshToken(access_token=r["access_token"],
-                            refresh_token=r["refresh_token"],
-                            expires_on=r["expires_on"])
+        return RefreshToken(
+            access_token=r["access_token"],
+            refresh_token=r["refresh_token"],
+            expires_on=r["expires_on"],
+        )
 
     @classmethod
     def get_user_object(cls, access_token):
@@ -413,27 +456,25 @@ class ADAuth(LoginManager):
         Get the AD User Object.
         """
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
-            'Accept' : 'application/json'
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json",
         }
-        params = {
-            "api-version": "1.6"
-        }
-        url = "{}/me".format(current_app.config["AD_GRAPH_URL"])
+        params = {"api-version": "1.6"}
+        url = f"{current_app.config['AD_GRAPH_URL']}/me"
         r = requests.get(url, headers=headers, params=params)
         return r.json()
 
     @classmethod
     def load_all_groups_from_ad(cls, access_token):
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
-            'Accept' : 'application/json'
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json",
         }
-        params = {
-            "api-version": "1.6"
-        }
-        url = "{}/{}/groups".format(current_app.config["AD_GRAPH_URL"],
-                                    current_app.config["AD_DOMAIN_FOR_GROUPS"])
+        params = {"api-version": "1.6"}
+        url = "{}/{}/groups".format(
+            current_app.config["AD_GRAPH_URL"],
+            current_app.config["AD_DOMAIN_FOR_GROUPS"],
+        )
         r = requests.get(url, headers=headers, params=params)
         for g in r.json()["value"]:
             g_id = g["objectId"]
@@ -455,7 +496,7 @@ class ADAuth(LoginManager):
                 g = cls.group_name_cache
             else:
                 g = cls.load_all_groups_from_ad(access_token)
-        return [{"id": key, "name":g[key]} for key in g]
+        return [{"id": key, "name": g[key]} for key in g]
 
     @classmethod
     def get_user_groups(cls, access_token):
@@ -463,16 +504,12 @@ class ADAuth(LoginManager):
         Get a list with the id of all groups the user belongs to.
         """
         headers = {
-            "Authorization": "Bearer {}".format(access_token),
-            'Accept' : 'application/json'
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/json",
         }
-        params = {
-            "api-version": "1.6"
-        }
-        body = {
-            "securityEnabledOnly": False
-        }
-        url = "{}/me/getMemberGroups".format(current_app.config["AD_GRAPH_URL"])
+        params = {"api-version": "1.6"}
+        body = {"securityEnabledOnly": False}
+        url = f"{current_app.config['AD_GRAPH_URL']}/me/getMemberGroups"
         my_groups = requests.post(url, headers=headers, params=params, json=body).json()
         out = []
         for g in my_groups["value"]:
@@ -480,7 +517,7 @@ class ADAuth(LoginManager):
         return out
 
     def oauth_callback(self):
-        code = request.args.get('code')
+        code = request.args.get("code")
         if not code:
             logger.error("NO 'code' VALUE RECEIVED")
             return abort(400)
@@ -489,7 +526,7 @@ class ADAuth(LoginManager):
         # Write to db
         user.set_ad_manager(self)
         self.store_user(user)
-        login_user(user, remember=True) # Todo Remember me
+        login_user(user, remember=True)  # Todo Remember me
         logger.warning("User %s logged in", user.email)
         if self.on_login_callback is not None:
             return self.on_login_callback(user)
@@ -557,17 +594,19 @@ class SQLiteDatabase(object):
         Connect to SQLite3 database. This will create a new user table if
         it doesnt exist.
         """
-        conn = sqlite3.connect(self.config['AD_SQLITE_DB'])
-        conn.execute("CREATE TABLE IF NOT EXISTS users ("
-                        "email TEXT PRIMARY KEY, "
-                        "refresh_token TEXT, "
-                        "access_token TEXT, "
-                        "expires_on INTEGER, "
-                        "token_type TEXT, "
-                        "resource TEXT, "
-                        "scope TEXT,"
-                        "groups TEXT,"
-                        "metadata TEXT);")
+        conn = sqlite3.connect(self.config["AD_SQLITE_DB"])
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS users ("
+            "email TEXT PRIMARY KEY, "
+            "refresh_token TEXT, "
+            "access_token TEXT, "
+            "expires_on INTEGER, "
+            "token_type TEXT, "
+            "resource TEXT, "
+            "scope TEXT,"
+            "groups TEXT,"
+            "metadata TEXT);"
+        )
         conn.commit()
         self.conn = conn
         return conn
@@ -583,10 +622,21 @@ class SQLiteDatabase(object):
         """
         c = self.conn.cursor()
         _metadata = json.dumps(user.metadata)
-        c.execute("INSERT OR REPLACE INTO users (email, access_token, refresh_token, expires_on, "
-                  "token_type, resource, scope, groups, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                  (user.email, user.access_token, user.refresh_token, user.expires_on,
-                   user.token_type, user.resource, user.scope, user.group_string, _metadata))
+        c.execute(
+            "INSERT OR REPLACE INTO users (email, access_token, refresh_token, expires_on, "
+            "token_type, resource, scope, groups, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                user.email,
+                user.access_token,
+                user.refresh_token,
+                user.expires_on,
+                user.token_type,
+                user.resource,
+                user.scope,
+                user.group_string,
+                _metadata,
+            ),
+        )
         self.conn.commit()
         return user
 
@@ -595,14 +645,25 @@ class SQLiteDatabase(object):
         Get User from db. Will return the user object or None.
         """
         c = self.conn.cursor()
-        c.execute("SELECT email, access_token, refresh_token, expires_on, "
-                  "token_type, resource, scope, groups, metadata FROM users WHERE email=?", (email,))
+        c.execute(
+            "SELECT email, access_token, refresh_token, expires_on, "
+            "token_type, resource, scope, groups, metadata FROM users WHERE email=?",
+            (email,),
+        )
         row = c.fetchone()
         if row:
             _metadata = json.loads(row[8])
-            return self.user_baseclass(email=row[0], access_token=row[1], refresh_token=row[2],
-                                       expires_on=int(row[3]), token_type=row[4], resource=row[5],
-                                       scope=row[6], group_string=row[7], metadata=_metadata)
+            return self.user_baseclass(
+                email=row[0],
+                access_token=row[1],
+                refresh_token=row[2],
+                expires_on=int(row[3]),
+                token_type=row[4],
+                resource=row[5],
+                scope=row[6],
+                group_string=row[7],
+                metadata=_metadata,
+            )
         return None
 
 
@@ -619,8 +680,11 @@ class RedisDatabase(object):
         """
         Connect to Redis.
         """
-        conn = redis.StrictRedis(self.config["AD_REDIS_HOST"], self.config["AD_REDIS_PORT"],
-                                 self.config["AD_REDIS_DB"])
+        conn = redis.StrictRedis(
+            self.config["AD_REDIS_HOST"],
+            self.config["AD_REDIS_PORT"],
+            self.config["AD_REDIS_DB"],
+        )
         self.conn = conn
         return conn
 

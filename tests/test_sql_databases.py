@@ -1,8 +1,12 @@
-import unittest
 import time
+import unittest
 
 from flask import Flask
-from flask_ad_auth import ADAuth, User
+
+from flask_ad_auth import (
+    ADAuth,
+    User,
+)
 
 
 class TestDatabase(unittest.TestCase):
@@ -28,8 +32,17 @@ class TestDatabase(unittest.TestCase):
         self.assertTrue(ad)
 
         exp = time.time() + 100
-        u1 = User("test@test.at", "acc_token", "refresh_token", exp, "token_type", "res", "scope",
-                  group_string="group1;group2", metadata={"foo": "bar"})
+        u1 = User(
+            "test@test.at",
+            "acc_token",
+            "refresh_token",
+            exp,
+            "token_type",
+            "res",
+            "scope",
+            group_string="group1;group2",
+            metadata={"foo": "bar"},
+        )
         ad.store_user(u1)
         u2 = ad.get_user("test@test.at")
         self.assertEqual(u1.to_dict(), u2.to_dict())
